@@ -1,0 +1,45 @@
+from flask import Flask, render_template, request, jsonify
+import google.generativeai as genai
+
+app = Flask(__name__)
+
+# Configure the Generative AI
+genai.configure(api_key="AIzaSyDtK2oGUj8oUG-1Xs9GJQ7FyDow1pYkfNU")
+
+# Set up the model
+generation_config = {
+    "temperature": 1,
+    "top_p": 0.95,
+    "top_k": 0,
+    "max_output_tokens": 8192,
+}
+
+safety_settings = [
+    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+]
+
+system_instruction = """estimate the width of the trunk of the tree that is in the image, make your estimate of the diameter of the tree based on the background, type of tree, and surroundings to make an accurate prediction of the diameter of the Tree Trunk, then based on the diameter of the tree trunk you need to say a price based on this price chart\n\nImage Analysis:\nUtilize advanced image processing techniques to identify and isolate the tree trunk from the background.\nEnhance image clarity and remove noise for accurate analysis.\nTree Identification:\nEmploy state-of-the-art machine learning models to classify the tree species based on visual features such as leaf shape, bark texture, and overall structure.\nUtilize pre-trained models trained on diverse datasets for robust classification.\nTrunk Detection:\nEmploy edge detection algorithms to locate the edges of the tree trunk accurately.\nUtilize advanced computer vision algorithms to distinguish the trunk from branches or other objects in the image.\nMeasurement Precision:\nEmploy high-resolution image analysis to ensure precise measurement of the tree trunk's diameter.\nUtilize sub-pixel edge detection techniques to enhance measurement accuracy.\nBackground Analysis:\nAnalyze the background of the image to determine any objects or features that can serve as reference points for scale.\nUtilize geometric analysis to calibrate the diameter estimation relative to known objects in the background.\nHeight Estimation:\nUtilize image perspective analysis to estimate the height of the tree.\nEmploy machine learning algorithms trained on diverse datasets to infer tree height from visual cues.\nLeaf Counting:\nIf visible, count the number of leaves or branches on the tree to refine diameter estimation further.\nUtilize advanced object detection algorithms to count individual leaves accurately.\nIntegration of Multiple Data Sources:\nIntegrate information from tree identification, trunk detection, background analysis, height estimation, and leaf counting to refine diameter estimation.\nEmploy ensemble learning techniques to combine predictions from multiple sources for improved accuracy.\nPrediction with Confidence Interval:\nProvide the estimated diameter of the tree trunk along with a confidence interval to indicate the model's certainty.\nEnsure that the estimated diameter falls within a 2-inch margin of error to maintain accuracy.\n\n1 inch - $50\n2 inches - $60\n3 inches - $70\n4 inches - $80\n5 inches - $90\n6 inches - $100\n7 inches - $110\n8 inches - $120\n9 inches - $130\n10 inches - $250\n11 inches - $260\n12 inches - $270\n13 inches - $280\n14 inches - $290\n15 inches - $300\n16 inches - $310\n17 inches - $320\n18 inches - $330\n19 inches - $340\n20 inches - $350\n21 inches - $360\n22 inches - $370\n23 inches - $380\n24 inches - $390\n25 inches - $400\n26 inches - $410\n27 inches - $420\n28 inches - $430\n29 inches - $440\n30 inches - $450\n31 inches - $460\n32 inches - $470\n33 inches - $480\n34 inches - $490\n35 inches - $500\n36 inches - $510\n37 inches - $520\n38 inches - $530\n39 inches - $540\n40 inches - $550\n41 inches - $560\n42 inches - $570\n43 inches - $580\n44 inches - $590\n45 inches - $600\n46 inches - $610\n47 inches - $620\n48 inches - $630\n49 inches - $640\n50 inches - $650\n51 inches - $660\n52 inches - $670\n53 inches - $680\n54 inches - $690\n55 inches - $700\n56 inches - $710\n57 inches - $720\n58 inches - $730\n59 inches - $740\n60 inches - $750\n61 inches - $760\n62 inches - $770\n63 inches - $780\n64 inches - $790\n65 inches - $800\n66 inches - $810\n67 inches - $820\n68 inches - $830\n69 inches - $840\n70 inches - $850\n71 inches - $860\n72 inches - $870\n73 inches - $880\n74 inches - $890\n75 inches - $900\n76 inches - $910\n77 inches - $920\n78 inches - $930\n79 inches - $940\n80 inches - $950\n81 inches - $960\n82 inches - $970\n83 inches - $980\n84 inches - $990\n85 inches - $1000\n86 inches - $1010\n87 inches - $1020\n88 inches - $1030\n89 inches - $1040\n90 inches - $1050\n91 inches - $1060\n92 inches - $1070\n93 inches - $1080\n94 inches - $1090\n95 inches - $1100\n96 inches - $1110\n97 inches - $1120\n98 inches - $1130\n99 inches - $1140\n100 inches - $1150\n\nThe text response should be in the format of:\n\n \nThe tree looks to be a {type of tree}\nThe tree trunk looks to have a diameter of {trunk diameter}\nBased on this, the estimated price for removal is {Price}\n\"if this is not the width or type of tree, please say in your next chat\n\nConfidence Score: {confidence score/100}\n\n----------------\n****** IF THERE IS NO TREE DETECTED - SAY THERE IS NO TREE""""
+
+model = genai.GenerativeModel(
+    model_name="gemini-1.5-pro-latest",
+    generation_config=generation_config,
+    system_instruction=system_instruction,
+    safety_settings=safety_settings
+)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/process', methods=['POST'])
+def process():
+    text_input = request.form['user_input']
+    # For simplicity, we're not processing images here. It would require additional image handling logic.
+    response = model.generate_content([text_input])
+    return jsonify({"response": response.text})
+
+if __name__ == '__main__':
+    app.run(debug=True)
